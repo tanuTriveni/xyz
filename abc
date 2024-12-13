@@ -436,7 +436,154 @@ Goal State is:
 _______________________________________________________________________________________________________________________________________________________________________________________________________________________
 
 Practical no 4
-Aim 
+Aim : WAP to implement Best first Search in 8 puzzle
+
+import java.util.*;
+
+public class P4_BestFirstSearch {
+
+    // Calculate Manhattan Distance
+    public static int manhattanDistance(int[] state, int[] goal) {
+        int distance = 0;
+        for (int i = 0; i < 9; i++) {
+            if (state[i] != 0) {
+                int currentX = i / 3;
+                int currentY = i % 3;
+                int goalIndex = -1;
+                for (int j = 0; j < 9; j++) {
+                    if (goal[j] == state[i]) {
+                        goalIndex = j;
+                        break;
+                    }
+                }
+                int goalX = goalIndex / 3;
+                int goalY = goalIndex % 3;
+                distance += Math.abs(currentX - goalX) + Math.abs(currentY - goalY);
+            }
+        }
+        return distance;
+    }
+
+    // Flatten a 2D array to a 1D array
+    public static int[] flatten(int[][] state) {
+        int[] flat = new int[9];
+        int index = 0;
+        for (int[] row : state) {
+            for (int tile : row) {
+                flat[index++] = tile;
+            }
+        }
+        return flat;
+    }
+
+    // Print the state of the puzzle
+    public static void printState(int[][] state) {
+        for (int[] row : state) {
+            System.out.println(Arrays.toString(row));
+        }
+        System.out.println();
+    }
+
+    // Perform Best First Search
+    public static List<String> bestFirstSearch(int[][] start, int[][] goal) {
+        PriorityQueue<Node> openList = new PriorityQueue<>(Comparator.comparingInt(node -> node.heuristic));
+        Set<String> visited = new HashSet<>();
+
+        openList.add(new Node(start, manhattanDistance(flatten(start), flatten(goal)), new ArrayList<>()));
+        visited.add(Arrays.deepToString(start));
+
+        Map<String, int[]> directions = Map.of(
+            "up", new int[]{-1, 0},
+            "down", new int[]{1, 0},
+            "left", new int[]{0, -1},
+            "right", new int[]{0, 1}
+        );
+
+        while (!openList.isEmpty()) {
+            Node currentNode = openList.poll();
+            int[][] currentState = currentNode.state;
+            List<String> path = currentNode.path;
+
+            System.out.println("Current state:");
+            printState(currentState);
+
+            if (Arrays.deepEquals(currentState, goal)) {
+                return path;
+            }
+
+            int blankX = -1, blankY = -1;
+            outer: for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    if (currentState[i][j] == 0) {
+                        blankX = i;
+                        blankY = j;
+                        break outer;
+                    }
+                }
+            }
+
+            for (Map.Entry<String, int[]> direction : directions.entrySet()) {
+                int newX = blankX + direction.getValue()[0];
+                int newY = blankY + direction.getValue()[1];
+
+                if (newX >= 0 && newX < 3 && newY >= 0 && newY < 3) {
+                    int[][] newState = new int[3][3];
+                    for (int i = 0; i < 3; i++) {
+                        newState[i] = currentState[i].clone();
+                    }
+
+                    newState[blankX][blankY] = newState[newX][newY];
+                    newState[newX][newY] = 0;
+
+                    String newStateString = Arrays.deepToString(newState);
+                    if (!visited.contains(newStateString)) {
+                        visited.add(newStateString);
+                        List<String> newPath = new ArrayList<>(path);
+                        newPath.add(direction.getKey());
+                        openList.add(new Node(newState, manhattanDistance(flatten(newState), flatten(goal)), newPath));
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public static void main(String[] args) {
+        int[][] startState = {
+            {1, 2, 3},
+            {0, 4, 6},
+            {7, 5, 8}
+        };
+
+        int[][] goalState = {
+            {1, 2, 3},
+            {4, 5, 6},
+            {7, 8, 0}
+        };
+
+        List<String> resultPath = bestFirstSearch(startState, goalState);
+        if (resultPath != null) {
+            System.out.println("Solution found!");
+            System.out.println("Moves: " + resultPath);
+        } else {
+            System.out.println("No solution found");
+        }
+    }
+
+    static class Node {
+        int[][] state;
+        int heuristic;
+        List<String> path;
+
+        Node(int[][] state, int heuristic, List<String> path) {
+            this.state = state;
+            this.heuristic = heuristic;
+            this.path = path;
+        }
+    }
+}
+
 
 
 
